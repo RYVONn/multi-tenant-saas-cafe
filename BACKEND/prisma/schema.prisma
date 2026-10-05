@@ -1,0 +1,784 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Categories ───────────────────────────────────────────────────────────────
+
+model categories {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String     @db.VarChar(100)
+  image_url  String?
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  // AZT: explicit menu ordering — lower shows first. Backfilled from
+  // created_at order, then editable from the dashboard with no SQL needed.
+  sort_order Int        @default(0)
+  // AZT: draft categories (and everything inside them) are hidden from the
+  // customer-facing site entirely, regardless of each product's own status —
+  // lets you build out a whole new category of products before it goes live.
+  status     String     @default("published")
+
+  products products[]
+
+  @@index([sort_order])
+  @@index([status])
+}
+
+model products {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_id String   @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  available   Boolean  @default(true)
+  image_url   String?
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+  is_featured Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  status      String   @default("published")
+  coming_soon Boolean  @default(false)
+  // AZT: hot/cold flag — not every product is a drink, so this stays optional.
+  temperature product_temperature?
+
+  categories     categories       @relation(fields: [category_id], references: [id])
+  sizes          product_sizes[]
+  product_extras product_extras[]
+  offer_items    offer_items[]
+
+  @@index([category_id], map: "idx_products_category_id")
+}
+
+model product_sizes {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id String  @db.Uuid
+  name       String  @db.VarChar(50)
+  price      Decimal @db.Decimal(10, 2)
+  sort_order Int     @default(0)
+
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id], map: "idx_product_sizes_product_id")
+}
+
+model extra_categories {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String   @db.VarChar(100)
+  sort_order Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  extras extras[]
+}
+
+model extras {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String   @db.VarChar(100)
+  price             Decimal  @db.Decimal(10, 2)
+  available         Boolean  @default(true)
+  extra_category_id String?  @db.Uuid
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  extra_category extra_categories? @relation(fields: [extra_category_id], references: [id], onDelete: SetNull)
+  product_extras product_extras[]
+}
+
+model product_extras {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  product_id String @db.Uuid
+  extra_id   String @db.Uuid
+
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  extra   extras   @relation(fields: [extra_id],   references: [id], onDelete: Cascade)
+
+  @@unique([product_id, extra_id])
+}
+
+model customers {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name  String   @db.VarChar(255)
+  email      String   @unique @db.VarChar(255)
+  password   String
+  phone      String?  @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  points           Int     @default(0)
+  pass_kit_card_id String? @unique @db.VarChar(255)
+  distribution_url String?
+  // AZT: birthday captured at signup, shown on profile, used for future birthday-bonus workflow
+  birthday         DateTime? @db.Date
+
+  orders              orders[]
+  points_transactions points_transactions[]
+
+  @@index([points(sort: Desc)], map: "idx_customers_points")
+}
+
+model points_transactions {
+  id               Int      @id @default(autoincrement())
+  customer_id      String   @db.Uuid
+  amount           Int
+  transaction_type String   @db.VarChar(20)
+  order_id         String?  @db.VarChar(255)
+  note             String?
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  customer customers @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@index([customer_id], map: "idx_points_transactions_customer_id")
+  @@unique([order_id, transaction_type], name: "idx_points_transactions_order_id_type_unique")
+}
+
+model offers {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title        String   @db.VarChar(255)
+  description  String?
+  offer_type   String   @db.VarChar(20)
+  price        Decimal? @db.Decimal(10, 2)
+  points_price Int?
+  egp_value    Decimal? @db.Decimal(10, 2)
+  image_url    String?
+  is_active    Boolean  @default(true)
+  status       String   @default("published") @db.VarChar(20)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  offer_items offer_items[]
+}
+
+model offer_items {
+  id         Int     @id @default(autoincrement())
+  offer_id   String  @db.Uuid
+  product_id String  @db.Uuid
+  quantity   Int     @default(1)
+  size_name  String? @db.VarChar(50)
+
+  offers   offers   @relation(fields: [offer_id],   references: [id], onDelete: Cascade)
+  products products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model push_subscriptions {
+  id        String  @id @default(cuid())
+  endpoint  String  @unique
+  p256dh    String
+  auth      String
+  user_id   String?
+  user_role String?
+}
+
+model orders {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  customer_id String?    @db.Uuid
+  customer    customers? @relation(fields: [customer_id], references: [id], onDelete: SetNull)
+
+  customer_name          String       @db.VarChar(255)
+  customer_phone         String?      @db.VarChar(20)
+  type                   order_type
+  status                 order_status @default(pending)
+  address                String?
+  notes                  String?
+  total_amount           Decimal      @db.Decimal(12, 2)
+
+  payment_method         String  @default("cash")
+  payment_location       String  @default("in_store")
+  transaction_number     String?
+  payment_screenshot_url String?
+  payment_status         String  @default("pending")
+  points_redeemed        Int     @default(0)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt      @db.Timestamptz(6)
+
+  order_items order_items[]
+
+  @@index([created_at], map: "idx_orders_created_at")
+  @@index([status],     map: "idx_orders_status")
+  @@index([type],       map: "idx_orders_type")
+  @@index([customer_id], map: "idx_orders_customer_id")
+}
+
+model order_items {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id   String  @db.Uuid
+  product_id String? @db.Uuid
+
+  product_name String?  @db.VarChar(255)
+  image_url    String?
+  quantity     Int
+
+  size_id    String?
+  size_name  String?  @db.VarChar(50)
+  size_price Decimal? @db.Decimal(10, 2)
+
+  extras_snapshot Json? @default("[]")
+
+  unit_price Decimal @db.Decimal(10, 2)
+  subtotal   Decimal @db.Decimal(10, 2)
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  orders orders @relation(fields: [order_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id], map: "idx_order_items_order_id")
+}
+
+model shifts {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String? @db.Uuid
+  shift_name String?
+  role       String?
+  email      String?
+  password   String?
+
+  users users?  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Shift Shift[]
+  allowed_shift_type String?
+}
+
+model profiles {
+  id         String    @id @db.Uuid
+  full_name  String    @db.VarChar(255)
+  role       user_role @default(staff)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  users users @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([role], map: "idx_profiles_role")
+}
+
+model users {
+  id       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email    String?
+  profiles profiles?
+  shifts   shifts[]
+}
+
+// ─── Inventory Manager ────────────────────────────────────────────────────────
+
+model InventoryManager {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+
+  purchaseReceipts PurchaseReceipt[]
+  issuances        ShiftIssuance[]
+  requestResponses StockRequestResponse[]
+  inventorySales   InventorySale[]
+}
+
+// ─── Stock Item ───────────────────────────────────────────────────────────────
+// NEW FIELDS: packageSize, measurementUnit, packageCount
+// packageCount = number of packages in stock (e.g. 20 bottles)
+// packageSize  = size of each package (e.g. 1.0)
+// measurementUnit = unit of package size (e.g. "L", "g", "ml", "kg")
+// quantity remains as total volume/weight for backward compat:
+//   quantity = packageCount * packageSize
+// ─────────────────────────────────────────────────────────────────────────────
+
+model StockItem {
+  id              String             @id @default(cuid())
+  name            String             @unique
+  sku             String?            @unique
+  barcode         String?
+  categoryId      String?
+  category        InventoryCategory? @relation(fields: [categoryId], references: [id])
+  supplierId      String?
+  supplier        Supplier?          @relation(fields: [supplierId], references: [id])
+  unit            String             // package container type: bottle, bag, box, piece, etc.
+  isArchived   Boolean   @default(false)
+archivedAt   DateTime? 
+  // ── NEW: Package sizing ───────────────────────────────────────────────────
+  packageSize      Float?            // numeric size of each package (e.g. 250, 1, 500)
+  measurementUnit  String?           // unit of packageSize: "g", "kg", "ml", "L", "piece"
+  packageCount     Float             @default(0) // number of packages in stock
+  // ─────────────────────────────────────────────────────────────────────────
+
+  quantity        Float              @default(0) // kept for backward compat (= packageCount * packageSize or just packageCount)
+  minQuantity     Float              @default(0) // minimum package count alert threshold
+  purchasePrice   Float?             // buy price per package
+  sellingPrice    Float?             // sell price per package
+  tax             Float?
+  imageUrl        String?
+  storageLocation String?
+  expiryDate      DateTime?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  purchaseReceiptItems PurchaseReceiptItem[]
+  issuanceItems        ShiftIssuanceItem[]
+  consumptionItems     ConsumptionLogItem[]
+  stockRequestItems    StockRequestItem[]
+  auditLogs            StockAuditLog[]
+  saleItems            InventorySaleItem[]
+  wasteItems           InventoryWasteItem[]
+  movements            InventoryMovement[]
+}
+model ReceiptPayment {
+  id         String          @id @default(cuid())
+  receiptId  String
+  receipt    PurchaseReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  amount     Float
+  method     String?
+  note       String?
+  paidAt     DateTime        @default(now())
+  recordedBy String
+
+  @@index([receiptId])
+}
+// ─── Purchase Receipts ────────────────────────────────────────────────────────
+
+// ─── Purchase Receipts ────────────────────────────────────────────────────────
+
+model PurchaseReceipt {
+  id            String           @id @default(cuid())
+  receiptNumber String?          @unique
+  managerId     String
+  manager       InventoryManager @relation(fields: [managerId], references: [id])
+  supplierId    String?
+  supplierRef   Supplier?        @relation(fields: [supplierId], references: [id])
+  supplierName  String?
+  purchaseDate  DateTime?
+  totalCost     Float?
+  receiptPhoto  String?
+  notes         String?
+  paymentMethod String?
+  createdAt     DateTime         @default(now())
+
+  status         String @default("pending_approval")
+  rejectionNote  String?
+
+  amountPaid    Float     @default(0)
+  paymentStatus String    @default("unpaid")
+  dueDate       DateTime?
+
+  items        PurchaseReceiptItem[]
+  pendingItems PendingReceiptItem[]
+  payments     ReceiptPayment[]
+}
+
+
+model PurchaseReceiptItem {
+  id              String          @id @default(cuid())
+  receiptId       String
+  receipt         PurchaseReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  itemId          String?
+  item            StockItem?      @relation(fields: [itemId], references: [id])
+  quantity        Float
+  unitCost        Float?
+  sellingPrice    Float?
+  pendingItemData Json?
+
+  @@index([receiptId])
+  @@index([itemId])
+}
+
+model PendingReceiptItem {
+  id              String          @id @default(cuid())
+  receiptId       String
+  receipt         PurchaseReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  newName         String
+  newUnit         String
+  packageSize     Float?
+  measurementUnit String?
+  categoryId      String?
+  storageLocation String?
+  supplierId      String?
+  newMinQty       Float?
+  notes           String?
+  expiryDate      DateTime?
+  quantity        Float
+  unitCost        Float?
+  sellingPrice    Float?
+  createdAt       DateTime        @default(now())
+}
+
+
+model InventorySaleItem {
+  id        String        @id @default(cuid())
+  saleId    String
+  sale      InventorySale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      StockItem     @relation(fields: [itemId], references: [id])
+  quantity  Float
+  unitPrice Float?
+  subtotal  Float?        // ← أضفه
+
+  @@index([saleId])
+  @@index([itemId])
+}
+// ─── Shift (workflow) ─────────────────────────────────────────────────────────
+
+model Shift {
+  id           String      @id @default(cuid())
+  type         ShiftType
+  status       ShiftStatus @default(open)
+  staffId      String      @db.Uuid
+  staff        shifts      @relation(fields: [staffId], references: [id])
+  handoverNote String?
+  openedAt     DateTime    @default(now())
+  closedAt     DateTime?
+
+  consumptions  ConsumptionLog[]
+  issuances     ShiftIssuance[]
+  stockRequests StockRequest[]
+  snapshot      ShiftStockSnapshot?
+}
+
+model ShiftStockSnapshot {
+  id          String   @id @default(cuid())
+  shiftId     String   @unique
+  shift       Shift    @relation(fields: [shiftId], references: [id])
+  snapshot    Json
+  confirmedAt DateTime @default(now())
+}
+
+model ConsumptionLog {
+  id        String   @id @default(cuid())
+  shiftId   String
+  shift     Shift    @relation(fields: [shiftId], references: [id])
+  notes     String?
+  createdAt DateTime @default(now())
+
+  items ConsumptionLogItem[]
+}
+
+model ConsumptionLogItem {
+  id       String         @id @default(cuid())
+  logId    String
+  log      ConsumptionLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  itemId   String?                              // ← nullable now
+  item     StockItem?     @relation(fields: [itemId], references: [id])  // ← optional
+  quantity Float
+  customName String?
+}
+model ShiftIssuance {
+  id        String           @id @default(cuid())
+  shiftId   String
+  shift     Shift            @relation(fields: [shiftId], references: [id])
+  managerId String
+  manager   InventoryManager @relation(fields: [managerId], references: [id])
+  notes     String?
+  createdAt DateTime         @default(now())
+
+  items ShiftIssuanceItem[]
+}
+
+model ShiftIssuanceItem {
+  id         String        @id @default(cuid())
+  issuanceId String
+  issuance   ShiftIssuance @relation(fields: [issuanceId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       StockItem     @relation(fields: [itemId], references: [id])
+  quantity   Float
+}
+
+model StockRequest {
+  id        String             @id @default(cuid())
+  shiftId   String
+  shift     Shift              @relation(fields: [shiftId], references: [id])
+  status    StockRequestStatus @default(pending)
+  notes     String?
+  createdAt DateTime           @default(now())
+
+  items    StockRequestItem[]
+  response StockRequestResponse?
+}
+
+model StockRequestItem {
+  id         String       @id @default(cuid())
+  requestId  String
+  request    StockRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  itemId     String?                         // ← nullable now (was required)
+  item       StockItem?   @relation(fields: [itemId], references: [id])  // ← optional
+  customName String?                         // ← new: for custom/manual items
+  quantity   Float
+}
+model StockRequestResponse {
+  id        String           @id @default(cuid())
+  requestId String           @unique
+  request   StockRequest     @relation(fields: [requestId], references: [id])
+  managerId String
+  manager   InventoryManager @relation(fields: [managerId], references: [id])
+  status    String
+  notes     String?
+  createdAt DateTime         @default(now())
+}
+
+model StockAuditLog {
+  id             String    @id @default(cuid())
+  itemId         String
+  item           StockItem @relation(fields: [itemId], references: [id])
+  action         String
+  quantityBefore Float
+  quantityAfter  Float
+  delta          Float
+  actorId        String
+  actorRole      String
+  notes          String?
+  createdAt      DateTime  @default(now())
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  recipientId   String
+  recipientRole String
+  type          String
+  title         String
+  body          String
+  data          Json?
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+}
+
+
+
+model InventoryCategory {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  color     String?
+  createdAt DateTime    @default(now())
+
+  items StockItem[]
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchaseReceipts PurchaseReceipt[]
+  stockItems       StockItem[]
+  inventorySales   InventorySale[]
+}
+
+model InventorySale {
+  id            String           @id @default(cuid())
+  managerId     String
+  manager       InventoryManager @relation(fields: [managerId], references: [id])
+  supplierId    String?
+  supplierRef   Supplier?        @relation(fields: [supplierId], references: [id])
+  customerName  String
+  customerPhone String?
+  notes         String?
+  totalAmount   Float            @default(0)
+  paymentMethod String?
+  paymentStatus String           @default("unpaid")
+ amountReceived  Float @default(0)
+amountPaid      Float @default(0)
+amountRemaining Float @default(0) 
+  dueDate       DateTime?
+  invoiceImage  String?
+  saleDate      DateTime         @default(now())
+  createdAt     DateTime         @default(now())
+
+  items    InventorySaleItem[]
+  payments SalePayment[]
+}
+model SalePayment {
+  id         String        @id @default(cuid())
+  saleId     String
+  sale       InventorySale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  amount     Float
+  // method: 'cash' | 'instapay' | 'transfer' | 'check' | 'credit'
+  method     String?
+  note       String?
+  receivedAt DateTime      @default(now())
+  // recordedBy: InventoryManager.id of whoever entered the payment
+  recordedBy String
+
+  @@index([saleId])
+}
+
+
+model InventoryWaste {
+  id        String   @id @default(cuid())
+  managerId String?
+  staffId   String?
+  reason    String
+  notes     String?
+  image     String?
+  wasteDate DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  items InventoryWasteItem[]
+}
+
+model InventoryWasteItem {
+  id       String         @id @default(cuid())
+  wasteId  String
+  waste    InventoryWaste @relation(fields: [wasteId], references: [id], onDelete: Cascade)
+  itemId   String
+  item     StockItem      @relation(fields: [itemId], references: [id])
+  quantity Float
+}
+
+model InventoryMovement {
+  id          String    @id @default(cuid())
+  itemId      String
+  item        StockItem @relation(fields: [itemId], references: [id])
+  type        String
+  quantity    Float
+  qtyBefore   Float
+  qtyAfter    Float
+  actorId     String
+  actorRole   String
+  actorName   String
+  referenceId String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([itemId])
+  @@index([createdAt])
+  @@index([type])
+}
+// Add to schema.prisma
+
+model Conversation {
+  id           String    @id @default(cuid())
+  name         String?                        // null for DMs, set for broadcasts/groups
+  isGroup      Boolean   @default(false)
+  isBroadcast  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  participants ConversationParticipant[]
+  messages     DirectMessage[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  userRole       String
+  userName       String
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+model DirectMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  senderName     String
+  senderRole     String
+  body           String
+  isDeleted      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  editedAt       DateTime?
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+model Event {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(255)
+  description String?
+  imageUrl    String?
+  eventDate   DateTime
+  startTime   String   @db.VarChar(10)
+  endTime     String   @db.VarChar(10)
+  location    String?  @db.VarChar(255)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventDate], map: "idx_events_event_date")
+  @@index([isActive],  map: "idx_events_is_active")
+}
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum order_status {
+  pending
+  preparing
+  complete
+  cancelled
+}
+
+enum order_type {
+  pickup
+  drive_thru
+  delivery
+}
+
+enum user_role {
+  owner
+  manager
+  staff
+}
+
+enum ShiftType {
+  morning
+  evening
+}
+
+enum ShiftStatus {
+  open
+  closed
+}
+
+enum StockRequestStatus {
+  pending
+  approved
+  partial
+  rejected
+}
+
+enum product_temperature {
+  hot
+  cold
+}
+
+model store_settings {
+  id                          Int      @id @default(1)
+  points_multiplier           Float    @default(1)
+  saturday_points_enabled     Boolean  @default(false)
+  saturday_points_multiplier  Float    @default(1)
+  updated_at                  DateTime @default(now()) @updatedAt
+}
+
+model storefront_settings {
+  id                 Int      @id @default(1)
+  // AZT: two independent navbar slots — logo_url renders on the left,
+  // navbar_icon_url renders centered (was the hardcoded mascot before).
+  logo_url           String?
+  navbar_icon_url    String?
+  hero_image_url     String?
+  hero_title         String?
+  hero_subtitle      String?
+  about_us_title     String?
+  about_us_text      String?
+  about_us_image_url String?
+  // AZT: Arabic counterparts for the dashboard-editable copy — the customer
+  // site currently has no language toggle of its own, but these let the
+  // dashboard capture bilingual content ahead of that feature.
+  hero_title_ar        String?
+  hero_subtitle_ar     String?
+  about_us_title_ar    String?
+  about_us_text_ar     String?
+  updated_at         DateTime @default(now()) @updatedAt
+}
+
+model storefront_memories {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  image_url  String
+  caption    String?
+  sort_order Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([sort_order])
+}

@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+/generated/prisma
+BACKEND/uploads/
+BACKEND/drinks/
+DASHBOARD/dist/
+DASHBOARD/node_modules/
+frontend/dist/
+frontend/node_modules/
+*.log
+.DS_Store
