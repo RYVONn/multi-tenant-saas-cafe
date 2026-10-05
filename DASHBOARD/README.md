@@ -1,10 +1,14 @@
-# DASHBOARD (placeholder)
+# DASHBOARD
 
-Business owner/staff dashboard — to be built in Lovable.
+Business owner/staff dashboard (TanStack Start + React + Tailwind + shadcn/ui), imported from the
+Lovable project `moazwaelamer/pixel-perfect-show-7164`.
 
-Starting point: visually matches the existing Bleu dashboard (React + Vite + TypeScript +
-Tailwind + shadcn/ui), with new multi-tenant features layered on top (Storefront Settings
-CMS, Business Settings, Platform Admin awareness, etc.) and a refreshed look.
+Currently implemented routes: Orders, Inventory, Shift history (`src/routes/`), using mock data
+until the multi-tenant BACKEND endpoints are ready.
 
-Will consume the `BACKEND/` API once the multi-tenant endpoints are ready. Until then,
-build against mock/placeholder data.
+```sh
+npm install
+npm run dev      # local dev server
+npm run build    # production build (verified)
+npm test
+```
