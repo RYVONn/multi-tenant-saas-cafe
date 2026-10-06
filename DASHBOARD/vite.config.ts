@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Nitro defaults to the `cloudflare-module` preset. We're hosting the dashboard on Vercel,
+  // so pin the preset explicitly — Vercel's own NITRO_PRESET env var would also win this, but
+  // pinning it here means local/other-CI builds also produce Vercel-compatible output.
+  nitro: {
+    preset: "vercel",
+  },
 });

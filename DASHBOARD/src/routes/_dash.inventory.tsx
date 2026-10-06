@@ -1,9 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Boxes, CalendarClock, CalendarX, FileClock, History, PackageX, PackagePlus, Search, SlidersHorizontal, Tags, Trash2, Wallet } from "lucide-react";
+import { toast } from "sonner";
 import { Badge, Button, Card, EmptyState, Input, Kpi, PageHeader, Select, Table, Tabs, TabsContent, TabsList, Td } from "@/components/ui-kit";
-import { draftPurchases, fmt, invCategories, inventory, TODAY, type InvItem } from "@/lib/mock-data";
+import { api } from "@/lib/api-client";
+import { draftPurchases, fmt, invCategories, inventory as seed, TODAY, type InvItem } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+// GET /api/inventory/stock returns Prisma `StockItem` rows (+ category, supplier
+// relations). Map onto the UI's `InvItem` shape used throughout this page.
+type ApiStockItem = {
+  id: string; name: string; sku: string | null;
+  category?: { name: string } | null;
+  unit: string; packageCount?: number; quantity?: number;
+  purchasePrice?: number | null; minQuantity?: number; expiryDate?: string | null;
+};
+function mapStock(i: ApiStockItem): InvItem {
+  return {
+    id: i.id, name: i.name, sku: i.sku ?? "—",
+    category: i.category?.name ?? "Uncategorized",
+    type: "raw",
+    qty: i.packageCount ?? i.quantity ?? 0,
+    unit: i.unit, purchaseUnit: i.unit,
+    cost: i.purchasePrice ?? 0,
+    min: i.minQuantity ?? 0,
+    expiry: i.expiryDate ? i.expiryDate.slice(0, 10) : null,
+  };
+}
 
 export const Route = createFileRoute("/_dash/inventory")({
   head: () => ({ meta: [{ title: "Inventory — Café SaaS" }, { name: "description", content: "Stock levels, expiry and purchases." }, { property: "og:title", content: "Inventory — Café SaaS" }, { property: "og:description", content: "Stock levels, expiry and purchases." }] }),
@@ -17,6 +41,16 @@ const expState = (i: InvItem) => (!i.expiry ? "none" : days(i.expiry) < 0 ? "exp
 type Filter = "all" | "low" | "out" | "soon" | "expired" | null;
 
 function InventoryPage() {
+  const { data, isError } = useQuery({
+    queryKey: ["inventory", "stock"],
+    queryFn: async () => (await api.get<ApiStockItem[]>("/inventory/stock")).map(mapStock),
+    retry: 1,
+  });
+  useEffect(() => {
+    if (isError) toast.error("Couldn't load live inventory — showing sample data instead.");
+  }, [isError]);
+  const inventory = data ?? seed;
+
   const [filter, setFilter] = useState<Filter>(null);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
@@ -32,7 +66,7 @@ function InventoryPage() {
     if (filter === "expired" && expState(i) !== "expired") return false;
     if (cat && i.category !== cat) return false;
     return (i.name + i.sku).toLowerCase().includes(q.toLowerCase());
-  }), [filter, q, cat]);
+  }), [filter, q, cat, inventory]);
 
   return (
     <>

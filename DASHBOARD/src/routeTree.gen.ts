@@ -11,9 +11,29 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashRouteImport } from './routes/_dash'
+import { Route as DashAdminRouteImport } from './routes/_dash.admin'
+import { Route as DashBusinessSettingsRouteImport } from './routes/_dash.business-settings'
+import { Route as DashCategoriesRouteImport } from './routes/_dash.categories'
+import { Route as DashCustomersRouteImport } from './routes/_dash.customers'
+import { Route as DashEventsRouteImport } from './routes/_dash.events'
 import { Route as DashInventoryRouteImport } from './routes/_dash.inventory'
+import { Route as DashLoyaltyRouteImport } from './routes/_dash.loyalty'
+import { Route as DashMessagesRouteImport } from './routes/_dash.messages'
+import { Route as DashOffersRouteImport } from './routes/_dash.offers'
+import { Route as DashOrderHistoryRouteImport } from './routes/_dash.order-history'
 import { Route as DashOrdersRouteImport } from './routes/_dash.orders'
+import { Route as DashOverviewRouteImport } from './routes/_dash.overview'
+import { Route as DashPlatformRouteImport } from './routes/_dash.platform'
+import { Route as DashProductsRouteImport } from './routes/_dash.products'
+import { Route as DashReportsRouteImport } from './routes/_dash.reports'
+import { Route as DashSalesRouteImport } from './routes/_dash.sales'
 import { Route as DashShiftHistoryRouteImport } from './routes/_dash.shift-history'
+import { Route as DashShiftsRouteImport } from './routes/_dash.shifts'
+import { Route as DashStaffRouteImport } from './routes/_dash.staff'
+import { Route as DashStorefrontRouteImport } from './routes/_dash.storefront'
+import { Route as DashSuppliersRouteImport } from './routes/_dash.suppliers'
+import { Route as DashUsersRouteImport } from './routes/_dash.users'
+import { Route as DashWasteLogRouteImport } from './routes/_dash.waste-log'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,9 +44,54 @@ const DashRoute = DashRouteImport.update({
   id: '/_dash',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashAdminRoute = DashAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashBusinessSettingsRoute = DashBusinessSettingsRouteImport.update({
+  id: '/business-settings',
+  path: '/business-settings',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashCategoriesRoute = DashCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashCustomersRoute = DashCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashEventsRoute = DashEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashInventoryRoute = DashInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashLoyaltyRoute = DashLoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashMessagesRoute = DashMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashOffersRoute = DashOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashOrderHistoryRoute = DashOrderHistoryRouteImport.update({
+  id: '/order-history',
+  path: '/order-history',
   getParentRoute: () => DashRoute,
 } as any)
 const DashOrdersRoute = DashOrdersRouteImport.update({
@@ -34,44 +99,227 @@ const DashOrdersRoute = DashOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => DashRoute,
 } as any)
+const DashOverviewRoute = DashOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashPlatformRoute = DashPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashProductsRoute = DashProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashReportsRoute = DashReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashSalesRoute = DashSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => DashRoute,
+} as any)
 const DashShiftHistoryRoute = DashShiftHistoryRouteImport.update({
   id: '/shift-history',
   path: '/shift-history',
   getParentRoute: () => DashRoute,
 } as any)
+const DashShiftsRoute = DashShiftsRouteImport.update({
+  id: '/shifts',
+  path: '/shifts',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashStaffRoute = DashStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashStorefrontRoute = DashStorefrontRouteImport.update({
+  id: '/storefront',
+  path: '/storefront',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashSuppliersRoute = DashSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashUsersRoute = DashUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => DashRoute,
+} as any)
+const DashWasteLogRoute = DashWasteLogRouteImport.update({
+  id: '/waste-log',
+  path: '/waste-log',
+  getParentRoute: () => DashRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof DashAdminRoute
+  '/business-settings': typeof DashBusinessSettingsRoute
+  '/categories': typeof DashCategoriesRoute
+  '/customers': typeof DashCustomersRoute
+  '/events': typeof DashEventsRoute
   '/inventory': typeof DashInventoryRoute
+  '/loyalty': typeof DashLoyaltyRoute
+  '/messages': typeof DashMessagesRoute
+  '/offers': typeof DashOffersRoute
+  '/order-history': typeof DashOrderHistoryRoute
   '/orders': typeof DashOrdersRoute
+  '/overview': typeof DashOverviewRoute
+  '/platform': typeof DashPlatformRoute
+  '/products': typeof DashProductsRoute
+  '/reports': typeof DashReportsRoute
+  '/sales': typeof DashSalesRoute
   '/shift-history': typeof DashShiftHistoryRoute
+  '/shifts': typeof DashShiftsRoute
+  '/staff': typeof DashStaffRoute
+  '/storefront': typeof DashStorefrontRoute
+  '/suppliers': typeof DashSuppliersRoute
+  '/users': typeof DashUsersRoute
+  '/waste-log': typeof DashWasteLogRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof DashAdminRoute
+  '/business-settings': typeof DashBusinessSettingsRoute
+  '/categories': typeof DashCategoriesRoute
+  '/customers': typeof DashCustomersRoute
+  '/events': typeof DashEventsRoute
   '/inventory': typeof DashInventoryRoute
+  '/loyalty': typeof DashLoyaltyRoute
+  '/messages': typeof DashMessagesRoute
+  '/offers': typeof DashOffersRoute
+  '/order-history': typeof DashOrderHistoryRoute
   '/orders': typeof DashOrdersRoute
+  '/overview': typeof DashOverviewRoute
+  '/platform': typeof DashPlatformRoute
+  '/products': typeof DashProductsRoute
+  '/reports': typeof DashReportsRoute
+  '/sales': typeof DashSalesRoute
   '/shift-history': typeof DashShiftHistoryRoute
+  '/shifts': typeof DashShiftsRoute
+  '/staff': typeof DashStaffRoute
+  '/storefront': typeof DashStorefrontRoute
+  '/suppliers': typeof DashSuppliersRoute
+  '/users': typeof DashUsersRoute
+  '/waste-log': typeof DashWasteLogRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_dash': typeof DashRouteWithChildren
+  '/_dash/admin': typeof DashAdminRoute
+  '/_dash/business-settings': typeof DashBusinessSettingsRoute
+  '/_dash/categories': typeof DashCategoriesRoute
+  '/_dash/customers': typeof DashCustomersRoute
+  '/_dash/events': typeof DashEventsRoute
   '/_dash/inventory': typeof DashInventoryRoute
+  '/_dash/loyalty': typeof DashLoyaltyRoute
+  '/_dash/messages': typeof DashMessagesRoute
+  '/_dash/offers': typeof DashOffersRoute
+  '/_dash/order-history': typeof DashOrderHistoryRoute
   '/_dash/orders': typeof DashOrdersRoute
+  '/_dash/overview': typeof DashOverviewRoute
+  '/_dash/platform': typeof DashPlatformRoute
+  '/_dash/products': typeof DashProductsRoute
+  '/_dash/reports': typeof DashReportsRoute
+  '/_dash/sales': typeof DashSalesRoute
   '/_dash/shift-history': typeof DashShiftHistoryRoute
+  '/_dash/shifts': typeof DashShiftsRoute
+  '/_dash/staff': typeof DashStaffRoute
+  '/_dash/storefront': typeof DashStorefrontRoute
+  '/_dash/suppliers': typeof DashSuppliersRoute
+  '/_dash/users': typeof DashUsersRoute
+  '/_dash/waste-log': typeof DashWasteLogRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/inventory' | '/orders' | '/shift-history'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/business-settings'
+    | '/categories'
+    | '/customers'
+    | '/events'
+    | '/inventory'
+    | '/loyalty'
+    | '/messages'
+    | '/offers'
+    | '/order-history'
+    | '/orders'
+    | '/overview'
+    | '/platform'
+    | '/products'
+    | '/reports'
+    | '/sales'
+    | '/shift-history'
+    | '/shifts'
+    | '/staff'
+    | '/storefront'
+    | '/suppliers'
+    | '/users'
+    | '/waste-log'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inventory' | '/orders' | '/shift-history'
+  to:
+    | '/'
+    | '/admin'
+    | '/business-settings'
+    | '/categories'
+    | '/customers'
+    | '/events'
+    | '/inventory'
+    | '/loyalty'
+    | '/messages'
+    | '/offers'
+    | '/order-history'
+    | '/orders'
+    | '/overview'
+    | '/platform'
+    | '/products'
+    | '/reports'
+    | '/sales'
+    | '/shift-history'
+    | '/shifts'
+    | '/staff'
+    | '/storefront'
+    | '/suppliers'
+    | '/users'
+    | '/waste-log'
   id:
     | '__root__'
     | '/'
     | '/_dash'
+    | '/_dash/admin'
+    | '/_dash/business-settings'
+    | '/_dash/categories'
+    | '/_dash/customers'
+    | '/_dash/events'
     | '/_dash/inventory'
+    | '/_dash/loyalty'
+    | '/_dash/messages'
+    | '/_dash/offers'
+    | '/_dash/order-history'
     | '/_dash/orders'
+    | '/_dash/overview'
+    | '/_dash/platform'
+    | '/_dash/products'
+    | '/_dash/reports'
+    | '/_dash/sales'
     | '/_dash/shift-history'
+    | '/_dash/shifts'
+    | '/_dash/staff'
+    | '/_dash/storefront'
+    | '/_dash/suppliers'
+    | '/_dash/users'
+    | '/_dash/waste-log'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,11 +343,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_dash/admin': {
+      id: '/_dash/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof DashAdminRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/business-settings': {
+      id: '/_dash/business-settings'
+      path: '/business-settings'
+      fullPath: '/business-settings'
+      preLoaderRoute: typeof DashBusinessSettingsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/categories': {
+      id: '/_dash/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof DashCategoriesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/customers': {
+      id: '/_dash/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof DashCustomersRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/events': {
+      id: '/_dash/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof DashEventsRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/inventory': {
       id: '/_dash/inventory'
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof DashInventoryRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/loyalty': {
+      id: '/_dash/loyalty'
+      path: '/loyalty'
+      fullPath: '/loyalty'
+      preLoaderRoute: typeof DashLoyaltyRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/messages': {
+      id: '/_dash/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof DashMessagesRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/offers': {
+      id: '/_dash/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof DashOffersRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/order-history': {
+      id: '/_dash/order-history'
+      path: '/order-history'
+      fullPath: '/order-history'
+      preLoaderRoute: typeof DashOrderHistoryRouteImport
       parentRoute: typeof DashRoute
     }
     '/_dash/orders': {
@@ -109,6 +420,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashOrdersRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/overview': {
+      id: '/_dash/overview'
+      path: '/overview'
+      fullPath: '/overview'
+      preLoaderRoute: typeof DashOverviewRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/platform': {
+      id: '/_dash/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof DashPlatformRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/products': {
+      id: '/_dash/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof DashProductsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/reports': {
+      id: '/_dash/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof DashReportsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/sales': {
+      id: '/_dash/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof DashSalesRouteImport
+      parentRoute: typeof DashRoute
+    }
     '/_dash/shift-history': {
       id: '/_dash/shift-history'
       path: '/shift-history'
@@ -116,19 +462,101 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashShiftHistoryRouteImport
       parentRoute: typeof DashRoute
     }
+    '/_dash/shifts': {
+      id: '/_dash/shifts'
+      path: '/shifts'
+      fullPath: '/shifts'
+      preLoaderRoute: typeof DashShiftsRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/staff': {
+      id: '/_dash/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof DashStaffRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/storefront': {
+      id: '/_dash/storefront'
+      path: '/storefront'
+      fullPath: '/storefront'
+      preLoaderRoute: typeof DashStorefrontRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/suppliers': {
+      id: '/_dash/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof DashSuppliersRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/users': {
+      id: '/_dash/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof DashUsersRouteImport
+      parentRoute: typeof DashRoute
+    }
+    '/_dash/waste-log': {
+      id: '/_dash/waste-log'
+      path: '/waste-log'
+      fullPath: '/waste-log'
+      preLoaderRoute: typeof DashWasteLogRouteImport
+      parentRoute: typeof DashRoute
+    }
   }
 }
 
 interface DashRouteChildren {
+  DashAdminRoute: typeof DashAdminRoute
+  DashBusinessSettingsRoute: typeof DashBusinessSettingsRoute
+  DashCategoriesRoute: typeof DashCategoriesRoute
+  DashCustomersRoute: typeof DashCustomersRoute
+  DashEventsRoute: typeof DashEventsRoute
   DashInventoryRoute: typeof DashInventoryRoute
+  DashLoyaltyRoute: typeof DashLoyaltyRoute
+  DashMessagesRoute: typeof DashMessagesRoute
+  DashOffersRoute: typeof DashOffersRoute
+  DashOrderHistoryRoute: typeof DashOrderHistoryRoute
   DashOrdersRoute: typeof DashOrdersRoute
+  DashOverviewRoute: typeof DashOverviewRoute
+  DashPlatformRoute: typeof DashPlatformRoute
+  DashProductsRoute: typeof DashProductsRoute
+  DashReportsRoute: typeof DashReportsRoute
+  DashSalesRoute: typeof DashSalesRoute
   DashShiftHistoryRoute: typeof DashShiftHistoryRoute
+  DashShiftsRoute: typeof DashShiftsRoute
+  DashStaffRoute: typeof DashStaffRoute
+  DashStorefrontRoute: typeof DashStorefrontRoute
+  DashSuppliersRoute: typeof DashSuppliersRoute
+  DashUsersRoute: typeof DashUsersRoute
+  DashWasteLogRoute: typeof DashWasteLogRoute
 }
 
 const DashRouteChildren: DashRouteChildren = {
+  DashAdminRoute: DashAdminRoute,
+  DashBusinessSettingsRoute: DashBusinessSettingsRoute,
+  DashCategoriesRoute: DashCategoriesRoute,
+  DashCustomersRoute: DashCustomersRoute,
+  DashEventsRoute: DashEventsRoute,
   DashInventoryRoute: DashInventoryRoute,
+  DashLoyaltyRoute: DashLoyaltyRoute,
+  DashMessagesRoute: DashMessagesRoute,
+  DashOffersRoute: DashOffersRoute,
+  DashOrderHistoryRoute: DashOrderHistoryRoute,
   DashOrdersRoute: DashOrdersRoute,
+  DashOverviewRoute: DashOverviewRoute,
+  DashPlatformRoute: DashPlatformRoute,
+  DashProductsRoute: DashProductsRoute,
+  DashReportsRoute: DashReportsRoute,
+  DashSalesRoute: DashSalesRoute,
   DashShiftHistoryRoute: DashShiftHistoryRoute,
+  DashShiftsRoute: DashShiftsRoute,
+  DashStaffRoute: DashStaffRoute,
+  DashStorefrontRoute: DashStorefrontRoute,
+  DashSuppliersRoute: DashSuppliersRoute,
+  DashUsersRoute: DashUsersRoute,
+  DashWasteLogRoute: DashWasteLogRoute,
 }
 
 const DashRouteWithChildren = DashRoute._addFileChildren(DashRouteChildren)

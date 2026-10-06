@@ -1,9 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Clock, Inbox, X } from "lucide-react";
+import { toast } from "sonner";
 import { Badge, Card, PageHeader } from "@/components/ui-kit";
+import { api } from "@/lib/api-client";
 import { orders as seed, fmt, type Order, type OrderStatus, type OrderType } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+// ─── Backend mapping ──────────────────────────────────────────────────────────
+// GET /api/orders returns Prisma `orders` rows (+ order_items, order_type).
+// Map that shape onto the UI's `Order` type so the rest of the page is unaware
+// of the backend's naming (snake_case, order_type, total_amount, …).
+type ApiOrderItem = { name?: string; product_name?: string; quantity?: number };
+type ApiOrder = {
+  id: string | number;
+  number?: number;
+  customer_name?: string;
+  order_type?: OrderType;
+  status?: string;
+  order_items?: ApiOrderItem[];
+  total_amount?: number | string;
+  created_at?: string;
+};
+
+const statusMap: Record<string, OrderStatus> = {
+  pending: "new", new: "new", accepted: "accepted", preparing: "preparing",
+  ready: "ready", out_for_delivery: "out", out: "out",
+  complete: "completed", completed: "completed", cancelled: "cancelled",
+};
+
+function mapOrder(o: ApiOrder): Order {
+  const createdAt = o.created_at ? new Date(o.created_at).getTime() : Date.now();
+  return {
+    id: String(o.id),
+    number: o.number ?? Number(o.id),
+    customer: o.customer_name ?? "Customer",
+    type: o.order_type ?? "pickup",
+    status: statusMap[o.status ?? "new"] ?? "new",
+    items: (o.order_items ?? []).map((i) => ({ name: i.product_name ?? i.name ?? "Item", qty: i.quantity ?? 1 })),
+    total: Number(o.total_amount ?? 0),
+    minutesAgo: Math.max(0, Math.round((Date.now() - createdAt) / 60000)),
+  };
+}
 
 export const Route = createFileRoute("/_dash/orders")({
   head: () => ({ meta: [{ title: "Orders — Café SaaS" }, { name: "description", content: "Live order board from new to completed." }, { property: "og:title", content: "Orders — Café SaaS" }, { property: "og:description", content: "Live order board from new to completed." }] }),
@@ -21,8 +60,30 @@ const flow: { key: OrderStatus; label: string; dot: string }[] = [
 const typeStyle: Record<OrderType, string> = { pickup: "bg-type-pickup", delivery: "bg-type-delivery", "drive-thru": "bg-type-drive" };
 
 function OrdersPage() {
+  const queryClient = useQueryClient();
+  const { data, isError } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => (await api.get<ApiOrder[]>("/orders")).map(mapOrder),
+    retry: 1,
+  });
   const [list, setList] = useState<Order[]>(seed);
-  const move = (id: string, to: OrderStatus) => setList((l) => l.map((o) => (o.id === id ? { ...o, status: to } : o)));
+  useEffect(() => {
+    if (data) setList(data);
+  }, [data]);
+  useEffect(() => {
+    if (isError) toast.error("Couldn't load live orders — showing sample data instead.");
+  }, [isError]);
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) => api.patch(`/orders/${id}/status`, { status }),
+    onError: () => toast.error("Couldn't update order status on the server (change kept locally)."),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
+  });
+
+  const move = (id: string, to: OrderStatus) => {
+    setList((l) => l.map((o) => (o.id === id ? { ...o, status: to } : o)));
+    statusMutation.mutate({ id, status: to });
+  };
   const next = (s: OrderStatus) => flow[flow.findIndex((f) => f.key === s) + 1]?.key;
   const cancelled = list.filter((o) => o.status === "cancelled");
 

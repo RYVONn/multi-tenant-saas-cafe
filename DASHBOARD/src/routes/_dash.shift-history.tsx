@@ -1,16 +1,45 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ClipboardList, Coins, ShoppingBag, Circle } from "lucide-react";
+import { toast } from "sonner";
 import { Avatar, Badge, Card, Dialog, Input, Kpi, Label, PageHeader, Table, Td } from "@/components/ui-kit";
-import { fmt, shifts, staff, type Shift } from "@/lib/mock-data";
+import { api } from "@/lib/api-client";
+import { fmt, shifts as seed, staff, type Shift } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+
+// GET /api/inventory/shifts/shift-history returns a richer, nested shape
+// (staff, orders summary, consumption, …). Map onto the simpler UI `Shift`
+// type this page was built against.
+type ApiShift = {
+  id: string; staffId?: string; staff?: { id: string; shift_name?: string };
+  openedAt: string; closedAt: string | null; status: string;
+  orders?: { revenue?: number; completed?: number; cancelled?: number };
+};
+function mapShift(s: ApiShift): Shift {
+  const opened = new Date(s.openedAt);
+  const closed = s.closedAt ? new Date(s.closedAt) : null;
+  return {
+    id: s.id,
+    staffId: s.staff?.id ?? s.staffId ?? "",
+    date: s.openedAt.slice(0, 10),
+    clockIn: opened.toISOString().slice(11, 16),
+    clockOut: closed ? closed.toISOString().slice(11, 16) : null,
+    opening: 0,
+    expected: s.orders?.revenue ?? 0,
+    closing: closed ? (s.orders?.revenue ?? 0) : null,
+    channels: { pickup: s.orders?.completed ?? 0, delivery: 0, drive: 0 },
+    revenue: s.orders?.revenue ?? 0,
+    status: s.status === "closed" || s.status === "completed" ? "completed" : "working",
+  };
+}
 
 export const Route = createFileRoute("/_dash/shift-history")({
   head: () => ({ meta: [{ title: "Shift History — Café SaaS" }, { name: "description", content: "Every staff shift with cash reconciliation." }, { property: "og:title", content: "Shift History — Café SaaS" }, { property: "og:description", content: "Every staff shift with cash reconciliation." }] }),
   component: ShiftHistory,
 });
 
-const who = (id: string) => staff.find((s) => s.id === id)!;
+const who = (id: string) => staff.find((s) => s.id === id) ?? { id, name: "Staff", role: "Staff" };
 const orderCount = (s: Shift) => s.channels.pickup + s.channels.delivery + s.channels.drive;
 const variance = (s: Shift) => (s.closing == null ? 0 : s.closing - s.expected);
 
@@ -18,7 +47,18 @@ function ShiftHistory() {
   const [from, setFrom] = useState("2026-09-28");
   const [to, setTo] = useState("2026-10-05");
   const [open, setOpen] = useState<Shift | null>(null);
-  const rows = useMemo(() => shifts.filter((s) => s.date >= from && s.date <= to), [from, to]);
+
+  const { data, isError } = useQuery({
+    queryKey: ["shifts", "history", from, to],
+    queryFn: async () => (await api.get<ApiShift[]>("/inventory/shifts/shift-history", { from, to })).map(mapShift),
+    retry: 1,
+  });
+  useEffect(() => {
+    if (isError) toast.error("Couldn't load live shift history — showing sample data instead.");
+  }, [isError]);
+  const shifts = data ?? seed;
+
+  const rows = useMemo(() => shifts.filter((s) => s.date >= from && s.date <= to), [from, to, shifts]);
 
   return (
     <>
