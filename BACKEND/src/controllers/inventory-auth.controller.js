@@ -32,24 +32,13 @@ const loginInventoryManager = async (req, res) => {
     if (manager.password === 'sso-managed' || manager.password.startsWith('!sso-managed'))
       return res.status(401).json({ error: 'Invalid credentials' });
 
-    // Support both bcrypt-hashed and legacy plaintext passwords.
-    // Remove the plaintext branch after migrating all passwords to bcrypt.
-    let passwordValid = false;
-    if (manager.password.startsWith('$2')) {
-      // bcrypt hash
-      passwordValid = await bcrypt.compare(password, manager.password);
-    } else {
-      // legacy plaintext — TODO: migrate to bcrypt
-      passwordValid = password === manager.password;
-      if (passwordValid) {
-        // Auto-upgrade to bcrypt on successful login
-        const hashed = await bcrypt.hash(password, 10);
-        await prisma.inventoryManager.update({
-          where: { id: manager.id },
-          data:  { password: hashed }
-        });
-      }
-    }
+    // bcrypt only. Legacy plaintext rows must first be migrated with
+    // `node scripts/hash-staff-passwords.js`; anything that isn't a bcrypt
+    // hash is rejected.
+    if (typeof password !== 'string' || !manager.password.startsWith('$2'))
+      return res.status(401).json({ error: 'Invalid credentials' });
+
+    const passwordValid = await bcrypt.compare(password, manager.password);
 
     if (!passwordValid)
       return res.status(401).json({ error: 'Invalid credentials' });

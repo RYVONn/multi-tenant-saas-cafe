@@ -112,7 +112,10 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, '..', 'uploads'), staticOptions));
 app.use('/drinks',  express.static(path.join(__dirname, '..', 'drinks'), staticOptions));
-app.use('/api/debug', require('./routes/debug.routes'));
+// Debug endpoints dump raw DB rows — never mount them in production.
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/debug', require('./routes/debug.routes'));
+}
 
 // ─── 404 — JSON, not Express's default HTML page ──────────────────────────────
 app.use((req, res) => {
